@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="IBEAU Technologies student progress report generator">
+<meta name="theme-color" content="#143a63">
+<meta name="robots" content="noindex, nofollow">
+<title>Student Progress Report</title>
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+<noscript><p style="padding:20px;font-family:Arial">Please turn on JavaScript to use this page.</p></noscript>
+
+<!-- ============ 1. LOGIN ============ -->
+<main id="login" class="auth" hidden>
+  <form class="card" id="loginForm" novalidate>
+    <img class="logo" src="assets/favicon.svg" alt="" width="52" height="52">
+    <h1>IBEAU Technologies</h1>
+    <p class="sub">Student Progress Report &middot; staff login</p>
+    <label for="lgEmail">Email</label>
+    <input id="lgEmail" type="email" autocomplete="username" inputmode="email" placeholder="name@example.com">
+    <label for="lgPass">Password</label>
+    <div class="pw">
+      <input id="lgPass" type="password" autocomplete="current-password" placeholder="Password">
+      <button type="button" id="lgShow" aria-label="Show password">Show</button>
+    </div>
+    <div id="lgMsg" class="msg" role="alert"></div>
+    <button class="primary" id="lgBtn" type="submit">Log in</button>
+  </form>
+</main>
+
+<!-- ============ 2. SELECT BATCH ============ -->
+<main id="batchScreen" class="auth" hidden>
+  <div class="card">
+    <h1>Select batch</h1>
+    <p class="sub" id="bsUser"></p>
+    <label for="bsSelect">Batch</label>
+    <select id="bsSelect"></select>
+    <div id="bsMsg" class="msg" role="alert"></div>
+    <button class="primary" id="bsGo" type="button">Continue</button>
+    <button class="ghost" id="bsLogout" type="button">Log out</button>
+  </div>
+</main>
+
+<!-- ============ 3. STUDENTS OF THE BATCH ============ -->
+<main id="studentsScreen" class="auth wide" hidden>
+  <div class="card">
+    <div class="shead">
+      <div><h1 id="stTitle">Students</h1><p class="sub" id="stSub"></p></div>
+      <div class="sbtns">
+        <button class="ghost" id="stBack" type="button">Change batch</button>
+        <button class="ghost" id="stLogout" type="button">Log out</button>
+      </div>
+    </div>
+    <input id="stSearch" type="search" placeholder="Search by name or register number" autocomplete="off">
+    <div id="stMsg" class="msg" role="status"></div>
+    <div class="tw">
+      <table id="stTable">
+        <thead><tr><th>Reg No</th><th>Name</th><th class="hide-sm">Student phone</th><th class="hide-sm">Parent phone</th><th>Status</th><th></th></tr></thead>
+        <tbody id="stBody"></tbody>
+      </table>
+    </div>
+    <div class="sfoot"><button class="primary" id="stNew" type="button">+ New student</button></div>
+  </div>
+</main>
+
+<!-- ============ 4. MAIN FORM ============ -->
+<div id="app" hidden>
+  <div class="topbar">
+    <div class="who"><b id="tbBatch"></b><span id="tbUser"></span></div>
+    <div class="tbtns">
+      <button type="button" id="tbList">Student list</button>
+      <button type="button" id="tbChange">Change batch</button>
+      <button type="button" id="tbLogout">Log out</button>
+    </div>
+  </div>
+<div class="wrap">
+
+  <!-- ===== INPUT ===== -->
+  <div class="panel">
+    <h2>Enter details</h2>
+    <label>Student name</label><input id="name" placeholder="Anagh P">
+    <label>Registration number</label><input id="reg" placeholder="KDY/25/11/98">
+    <div class="row" style="margin-top:6px">
+      <button type="button" class="mini-btn" onclick="findSaved()">Find saved marks</button>
+      <button type="button" class="mini-btn" onclick="newStudent()">New student</button>
+    </div>
+    <div class="row">
+      <div><label>Place</label><input id="place" value="KONDOTTY"></div>
+      <div><label>Report date</label><input id="date" type="date"></div>
+    </div>
+    <label>Gender</label>
+    <input type="hidden" id="gender" value="m">
+    <div class="seg" id="genderSeg">
+      <button type="button" data-g="m" class="on" onclick="setGender('m')">Male</button>
+      <button type="button" data-g="f" onclick="setGender('f')">Female</button>
+    </div>
+    <div class="row">
+      <div><label>Student phone</label><input id="sph" type="tel" inputmode="tel" placeholder="98470 12345"></div>
+      <div><label>Parent / guardian phone</label><input id="pph" type="tel" inputmode="tel" placeholder="98470 12345"></div>
+    </div>
+
+    <!-- module selector -->
+    <div class="modbox">
+      <div class="t">SELECT MODULE</div>
+      <select id="cur">
+        <option value="1">Module 1</option>
+        <option value="2">Module 2</option>
+        <option value="3">Module 3</option>
+        <option value="4" selected>Module 4 – Final</option>
+      </select>
+      <div class="row">
+        <div><label>Start date</label><input id="df" type="date"></div>
+        <div><label>End date</label><input id="de" type="date"></div>
+      </div>
+      <div class="row">
+        <div><label>Total marks</label><input id="total" type="number" min="1" value="3500"></div>
+        <div><label id="glabel">Marks earned</label><input id="gained" type="number" min="0" placeholder="0"></div>
+      </div>
+      <div id="brkbox" style="display:none;margin-top:6px;padding-top:6px;border-top:1px dashed #9fcbdc">
+        <div class="mini" style="margin-top:4px">Final module marks (total = Management + Assessment + Classroom)</div>
+        <div class="row3">
+          <div><label>Management (max 700)</label><input id="m1" type="number" min="0" max="700"></div>
+          <div><label>Assessment (max 300)</label><input id="m2" type="number" min="0" max="300"></div>
+          <div><label>Classroom (max 2500)</label><input id="m3" type="number" min="0" max="2500"></div>
+        </div>
+        <label>RTC assessment score (max 50)</label><input id="rtc" type="number" min="0" max="50" placeholder="out of 50">
+        <div id="warn" class="hint" style="color:#b3261e;display:none">A mark is above its maximum (Management 700, Assessment 300, Classroom 2,500, RTC 50).</div>
+      </div>
+      <div class="row">
+        <div><label>Total sessions (auto)</label><input id="st" type="number" min="0" placeholder="from dates"></div>
+        <div><label>Attended sessions</label><input id="sa" type="number" min="0" placeholder="16"></div>
+      </div>
+      <div class="hint">Marks and attendance you enter go to the selected module. Switch the module to enter the next one – earlier entries are kept. Overall attendance is added up from all modules.</div>
+    </div>
+
+    <details>
+      <summary>Optional: class days</summary>
+
+      <div class="mini">Class days (used to count total sessions)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px;font-size:13px">
+        <label style="margin:0;color:#1b2430"><input type="checkbox" id="cd1" checked style="width:auto"> Mon</label>
+        <label style="margin:0;color:#1b2430"><input type="checkbox" id="cd2" checked style="width:auto"> Tue</label>
+        <label style="margin:0;color:#1b2430"><input type="checkbox" id="cd3" checked style="width:auto"> Wed</label>
+        <label style="margin:0;color:#1b2430"><input type="checkbox" id="cd4" checked style="width:auto"> Thu</label>
+        <label style="margin:0;color:#1b2430"><input type="checkbox" id="cd5" checked style="width:auto"> Fri</label>
+        <label style="margin:0;color:#1b2430"><input type="checkbox" id="cd6" style="width:auto"> Sat</label>
+        <label style="margin:0;color:#1b2430"><input type="checkbox" id="cd0" style="width:auto"> Sun</label>
+      </div>
+    </details>
+
+    <button class="btn" onclick="window.print()">Download PDF</button>
+    <div class="share">
+      <div class="t">SHARE RESULT</div>
+      <div class="g">
+        <button type="button" onclick="shareResult('parent')">WhatsApp → Parent</button>
+        <button type="button" onclick="shareResult('student')">WhatsApp → Student</button>
+      </div>
+      <div id="sh" class="hint" style="margin-top:8px;font-size:12px"></div>
+    </div>
+    <div id="bk" class="hint" style="margin-top:10px;font-size:12px"></div>
+  </div>
+
+  <!-- ===== REPORT ===== -->
+  <div class="page" id="report"></div>
+</div>
+</div><!-- /#app -->
+
+<div id="finder" class="modal">
+  <div class="mbox">
+    <h3>Find saved marks</h3>
+    <label for="searchReg">Register number</label>
+    <input id="searchReg" placeholder="KDY/25/11/98" autocomplete="off">
+    <div id="searchMsg" style="font-size:12px;margin-top:8px;min-height:16px"></div>
+    <div class="mbtns">
+      <button type="button" class="btn" id="searchGo">Search</button>
+      <button type="button" class="btn" id="searchCancel" style="background:#fff;color:var(--navy);border:1px solid var(--navy)">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>
